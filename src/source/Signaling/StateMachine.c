@@ -4,6 +4,7 @@
 #define LOG_CLASS "SignalingState"
 #include "../Include_i.h"
 
+// clang-format off
 /**
  * Static definitions of the states
  */
@@ -22,6 +23,7 @@ StateMachineState SIGNALING_STATE_MACHINE_STATES[] = {
         {SIGNALING_STATE_DELETED, SIGNALING_STATE_DELETE | SIGNALING_STATE_DELETED, fromDeletedSignalingState, executeDeletedSignalingState, INFINITE_RETRY_COUNT_SENTINEL, STATUS_SIGNALING_DELETE_CALL_FAILED},
 };
 
+// clang-format on
 UINT32 SIGNALING_STATE_MACHINE_STATE_COUNT = ARRAY_SIZE(SIGNALING_STATE_MACHINE_STATES);
 
 STATUS stepSignalingStateMachine(PSignalingClient pSignalingClient, STATUS status)
@@ -61,7 +63,7 @@ STATUS stepSignalingStateMachine(PSignalingClient pSignalingClient, STATUS statu
     // make the correct transition to auth integration state.
     if (status == STATUS_SERVICE_CALL_NOT_AUTHORIZED_ERROR ||
         (SERVICE_CALL_UNKNOWN == (SERVICE_CALL_RESULT) ATOMIC_LOAD(&pSignalingClient->result) &&
-        pSignalingClient->pAwsCredentials->expiration < currentTime)) {
+         pSignalingClient->pAwsCredentials->expiration < currentTime)) {
         // Set the call status as auth error
         ATOMIC_STORE(&pSignalingClient->result, (SIZE_T) SERVICE_CALL_NOT_AUTHORIZED);
     }
@@ -188,9 +190,8 @@ STATUS executeNewSignalingState(UINT64 customData, UINT64 time)
 
     // Notify of the state change
     if (pSignalingClient->signalingClientCallbacks.stateChangeFn != NULL) {
-        CHK_STATUS(pSignalingClient->signalingClientCallbacks.stateChangeFn(
-                pSignalingClient->signalingClientCallbacks.customData,
-                SIGNALING_CLIENT_STATE_NEW));
+        CHK_STATUS(pSignalingClient->signalingClientCallbacks.stateChangeFn(pSignalingClient->signalingClientCallbacks.customData,
+                                                                            SIGNALING_CLIENT_STATE_NEW));
     }
 
 CleanUp:
@@ -212,17 +213,17 @@ STATUS fromGetTokenSignalingState(UINT64 customData, PUINT64 pState)
         // Check if we are trying to delete a channel
         if (ATOMIC_LOAD_BOOL(&pSignalingClient->deleting)) {
             state = SIGNALING_STATE_DELETE;
-        } else if (pSignalingClient->pChannelInfo->pChannelArn != NULL &&
-                   pSignalingClient->pChannelInfo->pChannelArn[0] != '\0') {
+        }
+        else if (pSignalingClient->pChannelInfo->pChannelArn != NULL && pSignalingClient->pChannelInfo->pChannelArn[0] != '\0') {
             // If the client application has specified the Channel ARN then we will skip describe and create states
             // Store the ARN in the stream description object first
-            STRNCPY(pSignalingClient->channelDescription.channelArn, pSignalingClient->pChannelInfo->pChannelArn,
-                    MAX_ARN_LEN);
+            STRNCPY(pSignalingClient->channelDescription.channelArn, pSignalingClient->pChannelInfo->pChannelArn, MAX_ARN_LEN);
             pSignalingClient->channelDescription.channelArn[MAX_ARN_LEN] = '\0';
 
             // Move to get endpoint state
             state = SIGNALING_STATE_GET_ENDPOINT;
-        } else {
+        }
+        else {
             state = SIGNALING_STATE_DESCRIBE;
         }
     }
@@ -250,19 +251,18 @@ STATUS executeGetTokenSignalingState(UINT64 customData, UINT64 time)
 
     // Notify of the state change
     if (pSignalingClient->signalingClientCallbacks.stateChangeFn != NULL) {
-        CHK_STATUS(pSignalingClient->signalingClientCallbacks.stateChangeFn(
-                pSignalingClient->signalingClientCallbacks.customData,
-                SIGNALING_CLIENT_STATE_GET_CREDENTIALS));
+        CHK_STATUS(pSignalingClient->signalingClientCallbacks.stateChangeFn(pSignalingClient->signalingClientCallbacks.customData,
+                                                                            SIGNALING_CLIENT_STATE_GET_CREDENTIALS));
     }
 
     // Use the credential provider to get the token
-    retStatus = pSignalingClient->pCredentialProvider->getCredentialsFn(pSignalingClient->pCredentialProvider,
-                                                                        &pSignalingClient->pAwsCredentials);
+    retStatus = pSignalingClient->pCredentialProvider->getCredentialsFn(pSignalingClient->pCredentialProvider, &pSignalingClient->pAwsCredentials);
 
     // Check the expiration
     if (GETTIME() >= pSignalingClient->pAwsCredentials->expiration) {
         serviceCallResult = SERVICE_CALL_NOT_AUTHORIZED;
-    } else {
+    }
+    else {
         serviceCallResult = SERVICE_CALL_RESULT_OK;
     }
 
@@ -296,7 +296,8 @@ STATUS fromDescribeSignalingState(UINT64 customData, PUINT64 pState)
             // If we are trying to delete the channel then move to delete state
             if (ATOMIC_LOAD_BOOL(&pSignalingClient->deleting)) {
                 state = SIGNALING_STATE_DELETE;
-            } else {
+            }
+            else {
                 state = SIGNALING_STATE_GET_ENDPOINT;
             }
 
@@ -335,9 +336,8 @@ STATUS executeDescribeSignalingState(UINT64 customData, UINT64 time)
 
     // Notify of the state change
     if (pSignalingClient->signalingClientCallbacks.stateChangeFn != NULL) {
-        CHK_STATUS(pSignalingClient->signalingClientCallbacks.stateChangeFn(
-                pSignalingClient->signalingClientCallbacks.customData,
-                SIGNALING_CLIENT_STATE_DESCRIBE));
+        CHK_STATUS(pSignalingClient->signalingClientCallbacks.stateChangeFn(pSignalingClient->signalingClientCallbacks.customData,
+                                                                            SIGNALING_CLIENT_STATE_DESCRIBE));
     }
 
     // Call the aggregate function
@@ -399,9 +399,8 @@ STATUS executeCreateSignalingState(UINT64 customData, UINT64 time)
 
     // Notify of the state change
     if (pSignalingClient->signalingClientCallbacks.stateChangeFn != NULL) {
-        CHK_STATUS(pSignalingClient->signalingClientCallbacks.stateChangeFn(
-                pSignalingClient->signalingClientCallbacks.customData,
-                SIGNALING_CLIENT_STATE_CREATE));
+        CHK_STATUS(pSignalingClient->signalingClientCallbacks.stateChangeFn(pSignalingClient->signalingClientCallbacks.customData,
+                                                                            SIGNALING_CLIENT_STATE_CREATE));
     }
 
     // Call the aggregate function
@@ -463,9 +462,8 @@ STATUS executeGetEndpointSignalingState(UINT64 customData, UINT64 time)
 
     // Notify of the state change
     if (pSignalingClient->signalingClientCallbacks.stateChangeFn != NULL) {
-        CHK_STATUS(pSignalingClient->signalingClientCallbacks.stateChangeFn(
-                pSignalingClient->signalingClientCallbacks.customData,
-                SIGNALING_CLIENT_STATE_GET_ENDPOINT));
+        CHK_STATUS(pSignalingClient->signalingClientCallbacks.stateChangeFn(pSignalingClient->signalingClientCallbacks.customData,
+                                                                            SIGNALING_CLIENT_STATE_GET_ENDPOINT));
     }
 
     // Call the aggregate function
@@ -527,9 +525,8 @@ STATUS executeGetIceConfigSignalingState(UINT64 customData, UINT64 time)
 
     // Notify of the state change
     if (pSignalingClient->signalingClientCallbacks.stateChangeFn != NULL) {
-        CHK_STATUS(pSignalingClient->signalingClientCallbacks.stateChangeFn(
-                pSignalingClient->signalingClientCallbacks.customData,
-                SIGNALING_CLIENT_STATE_GET_ICE_CONFIG));
+        CHK_STATUS(pSignalingClient->signalingClientCallbacks.stateChangeFn(pSignalingClient->signalingClientCallbacks.customData,
+                                                                            SIGNALING_CLIENT_STATE_GET_ICE_CONFIG));
     }
 
     // Call the aggregate function
@@ -577,8 +574,7 @@ STATUS fromReadySignalingState(UINT64 customData, PUINT64 pState)
     }
 
     // Overwrite the state if we are force refreshing
-    state = ATOMIC_EXCHANGE_BOOL(&pSignalingClient->refreshIceConfig, FALSE) ?
-            SIGNALING_STATE_GET_ICE_CONFIG : state;
+    state = ATOMIC_EXCHANGE_BOOL(&pSignalingClient->refreshIceConfig, FALSE) ? SIGNALING_STATE_GET_ICE_CONFIG : state;
 
     *pState = state;
 
@@ -601,9 +597,8 @@ STATUS executeReadySignalingState(UINT64 customData, UINT64 time)
 
     // Notify of the state change
     if (pSignalingClient->signalingClientCallbacks.stateChangeFn != NULL) {
-        CHK_STATUS(pSignalingClient->signalingClientCallbacks.stateChangeFn(
-                pSignalingClient->signalingClientCallbacks.customData,
-                SIGNALING_CLIENT_STATE_READY));
+        CHK_STATUS(pSignalingClient->signalingClientCallbacks.stateChangeFn(pSignalingClient->signalingClientCallbacks.customData,
+                                                                            SIGNALING_CLIENT_STATE_READY));
     }
 
     // Ensure we won't async the GetIceConfig as we reach the ready state
@@ -612,7 +607,8 @@ STATUS executeReadySignalingState(UINT64 customData, UINT64 time)
     if (pSignalingClient->continueOnReady) {
         // Self-prime the connect
         CHK_STATUS(stepSignalingStateMachine(pSignalingClient, retStatus));
-    } else {
+    }
+    else {
         // Reset the timeout for the state machine
         pSignalingClient->stepUntil = 0;
     }
@@ -683,8 +679,7 @@ STATUS fromConnectSignalingState(UINT64 customData, PUINT64 pState)
     }
 
     // Overwrite the state if we are force refreshing
-    state = ATOMIC_EXCHANGE_BOOL(&pSignalingClient->refreshIceConfig, FALSE) ?
-            SIGNALING_STATE_GET_ICE_CONFIG : state;
+    state = ATOMIC_EXCHANGE_BOOL(&pSignalingClient->refreshIceConfig, FALSE) ? SIGNALING_STATE_GET_ICE_CONFIG : state;
 
     *pState = state;
 
@@ -704,9 +699,8 @@ STATUS executeConnectSignalingState(UINT64 customData, UINT64 time)
 
     // Notify of the state change
     if (pSignalingClient->signalingClientCallbacks.stateChangeFn != NULL) {
-        CHK_STATUS(pSignalingClient->signalingClientCallbacks.stateChangeFn(
-                pSignalingClient->signalingClientCallbacks.customData,
-                SIGNALING_CLIENT_STATE_CONNECTING));
+        CHK_STATUS(pSignalingClient->signalingClientCallbacks.stateChangeFn(pSignalingClient->signalingClientCallbacks.customData,
+                                                                            SIGNALING_CLIENT_STATE_CONNECTING));
     }
 
     retStatus = connectSignalingChannel(pSignalingClient, time);
@@ -772,8 +766,7 @@ STATUS fromConnectedSignalingState(UINT64 customData, PUINT64 pState)
     }
 
     // Overwrite the state if we are force refreshing
-    state = ATOMIC_EXCHANGE_BOOL(&pSignalingClient->refreshIceConfig, FALSE) ?
-            SIGNALING_STATE_GET_ICE_CONFIG : state;
+    state = ATOMIC_EXCHANGE_BOOL(&pSignalingClient->refreshIceConfig, FALSE) ? SIGNALING_STATE_GET_ICE_CONFIG : state;
 
     *pState = state;
 
@@ -794,9 +787,8 @@ STATUS executeConnectedSignalingState(UINT64 customData, UINT64 time)
 
     // Notify of the state change
     if (pSignalingClient->signalingClientCallbacks.stateChangeFn != NULL) {
-        CHK_STATUS(pSignalingClient->signalingClientCallbacks.stateChangeFn(
-                pSignalingClient->signalingClientCallbacks.customData,
-                SIGNALING_CLIENT_STATE_CONNECTED));
+        CHK_STATUS(pSignalingClient->signalingClientCallbacks.stateChangeFn(pSignalingClient->signalingClientCallbacks.customData,
+                                                                            SIGNALING_CLIENT_STATE_CONNECTED));
     }
 
     // Reset the timeout for the state machine
@@ -839,8 +831,7 @@ STATUS fromDisconnectedSignalingState(UINT64 customData, PUINT64 pState)
     }
 
     // Overwrite the state if we are force refreshing
-    state = ATOMIC_EXCHANGE_BOOL(&pSignalingClient->refreshIceConfig, FALSE) ?
-            SIGNALING_STATE_GET_ICE_CONFIG : state;
+    state = ATOMIC_EXCHANGE_BOOL(&pSignalingClient->refreshIceConfig, FALSE) ? SIGNALING_STATE_GET_ICE_CONFIG : state;
 
     *pState = state;
 
@@ -861,9 +852,8 @@ STATUS executeDisconnectedSignalingState(UINT64 customData, UINT64 time)
 
     // Notify of the state change
     if (pSignalingClient->signalingClientCallbacks.stateChangeFn != NULL) {
-        CHK_STATUS(pSignalingClient->signalingClientCallbacks.stateChangeFn(
-                pSignalingClient->signalingClientCallbacks.customData,
-                SIGNALING_CLIENT_STATE_DISCONNECTED));
+        CHK_STATUS(pSignalingClient->signalingClientCallbacks.stateChangeFn(pSignalingClient->signalingClientCallbacks.customData,
+                                                                            SIGNALING_CLIENT_STATE_DISCONNECTED));
     }
 
     // Self-prime the next state
@@ -929,9 +919,8 @@ STATUS executeDeleteSignalingState(UINT64 customData, UINT64 time)
 
     // Notify of the state change
     if (pSignalingClient->signalingClientCallbacks.stateChangeFn != NULL) {
-        CHK_STATUS(pSignalingClient->signalingClientCallbacks.stateChangeFn(
-                pSignalingClient->signalingClientCallbacks.customData,
-                SIGNALING_CLIENT_STATE_DELETE));
+        CHK_STATUS(pSignalingClient->signalingClientCallbacks.stateChangeFn(pSignalingClient->signalingClientCallbacks.customData,
+                                                                            SIGNALING_CLIENT_STATE_DELETE));
     }
 
     // Call the aggregate function
@@ -977,9 +966,8 @@ STATUS executeDeletedSignalingState(UINT64 customData, UINT64 time)
 
     // Notify of the state change
     if (pSignalingClient->signalingClientCallbacks.stateChangeFn != NULL) {
-        CHK_STATUS(pSignalingClient->signalingClientCallbacks.stateChangeFn(
-                pSignalingClient->signalingClientCallbacks.customData,
-                SIGNALING_CLIENT_STATE_DELETED));
+        CHK_STATUS(pSignalingClient->signalingClientCallbacks.stateChangeFn(pSignalingClient->signalingClientCallbacks.customData,
+                                                                            SIGNALING_CLIENT_STATE_DELETED));
     }
 
     // No-op

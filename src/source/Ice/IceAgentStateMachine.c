@@ -4,6 +4,7 @@
 #define LOG_CLASS "IceAgentState"
 #include "../Include_i.h"
 
+// clang-format off
 /**
  * Static definitions of the states
  */
@@ -17,6 +18,7 @@ StateMachineState ICE_AGENT_STATE_MACHINE_STATES[] = {
         {ICE_AGENT_STATE_FAILED, ICE_AGENT_STATE_CHECK_CONNECTION | ICE_AGENT_STATE_CONNECTED | ICE_AGENT_STATE_NOMINATING | ICE_AGENT_STATE_READY | ICE_AGENT_STATE_DISCONNECTED | ICE_AGENT_STATE_FAILED, fromFailedIceAgentState, executeFailedIceAgentState, INFINITE_RETRY_COUNT_SENTINEL, STATUS_ICE_INVALID_STATE},
 };
 
+// clang-format on
 UINT32 ICE_AGENT_STATE_MACHINE_STATE_COUNT = ARRAY_SIZE(ICE_AGENT_STATE_MACHINE_STATES);
 
 STATUS stepIceAgentStateMachine(PIceAgent pIceAgent)
@@ -38,12 +40,11 @@ STATUS stepIceAgentStateMachine(PIceAgent pIceAgent)
 
     if (oldState != pIceAgent->iceAgentState) {
         if (pIceAgent->iceAgentCallbacks.connectionStateChangedFn != NULL) {
-            DLOGD("Ice agent state changed from %s to %s.",
-                  iceAgentStateToString(oldState),
-                  iceAgentStateToString(pIceAgent->iceAgentState));
+            DLOGD("Ice agent state changed from %s to %s.", iceAgentStateToString(oldState), iceAgentStateToString(pIceAgent->iceAgentState));
             pIceAgent->iceAgentCallbacks.connectionStateChangedFn(pIceAgent->iceAgentCallbacks.customData, pIceAgent->iceAgentState);
         }
-    } else {
+    }
+    else {
         // state machine retry is not used. resetStateMachineRetryCount just to avoid
         // state machine retry grace period overflow warning.
         CHK_STATUS(resetStateMachineRetryCount(pIceAgent->pStateMachine));
@@ -93,12 +94,11 @@ STATUS iceAgentStateMachineCheckDisconnection(PIceAgent pIceAgent, PUINT64 pNext
     CHK(pIceAgent != NULL && pNextState != NULL, STATUS_NULL_ARG);
 
     currentTime = GETTIME();
-    if (!pIceAgent->detectedDisconnection &&
-        IS_VALID_TIMESTAMP(pIceAgent->lastDataReceivedTime) &&
+    if (!pIceAgent->detectedDisconnection && IS_VALID_TIMESTAMP(pIceAgent->lastDataReceivedTime) &&
         pIceAgent->lastDataReceivedTime + KVS_ICE_ENTER_STATE_DISCONNECTION_GRACE_PERIOD <= currentTime) {
         *pNextState = ICE_AGENT_STATE_DISCONNECTED;
-    } else if (pIceAgent->detectedDisconnection) {
-
+    }
+    else if (pIceAgent->detectedDisconnection) {
         if (IS_VALID_TIMESTAMP(pIceAgent->lastDataReceivedTime) &&
             pIceAgent->lastDataReceivedTime + KVS_ICE_ENTER_STATE_DISCONNECTION_GRACE_PERIOD > currentTime) {
             // recovered from disconnection
@@ -107,7 +107,8 @@ STATUS iceAgentStateMachineCheckDisconnection(PIceAgent pIceAgent, PUINT64 pNext
             if (pIceAgent->iceAgentCallbacks.connectionStateChangedFn != NULL) {
                 pIceAgent->iceAgentCallbacks.connectionStateChangedFn(pIceAgent->iceAgentCallbacks.customData, pIceAgent->iceAgentState);
             }
-        } else if (currentTime >= pIceAgent->disconnectionGracePeriodEndTime) {
+        }
+        else if (currentTime >= pIceAgent->disconnectionGracePeriodEndTime) {
             CHK(FALSE, STATUS_ICE_FAILED_TO_RECOVER_FROM_DISCONNECTION);
         }
     }
@@ -389,7 +390,8 @@ STATUS fromNominatingIceAgentState(UINT64 customData, PUINT64 pState)
 
     if (nominatedAndValidCandidatePairFound) {
         state = ICE_AGENT_STATE_READY;
-    } else if (currentTime >= pIceAgent->stateEndTime) {
+    }
+    else if (currentTime >= pIceAgent->stateEndTime) {
         CHK(FALSE, STATUS_ICE_FAILED_TO_NOMINATE_CANDIDATE_PAIR);
     }
 
@@ -430,7 +432,8 @@ STATUS executeNominatingIceAgentState(UINT64 customData, UINT64 time)
 
     if (pIceAgent->isControlling) {
         CHK_STATUS(iceAgentSendCandidateNomination(pIceAgent));
-    } else {
+    }
+    else {
         // if not controlling, keep sending connection checks and wait for peer
         // to nominate a pair.
         CHK_STATUS(iceAgentCheckCandidatePairConnection(pIceAgent));

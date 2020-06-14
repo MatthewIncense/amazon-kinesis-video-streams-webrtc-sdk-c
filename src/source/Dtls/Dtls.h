@@ -7,37 +7,38 @@
 
 #pragma once
 
-#ifdef  __cplusplus
+#ifdef __cplusplus
 extern "C" {
 #endif
 
 #define MAX_SRTP_MASTER_KEY_LEN 16
-#define MAX_SRTP_SALT_KEY_LEN 14
+#define MAX_SRTP_SALT_KEY_LEN   14
 
-#define GENERATED_CERTIFICATE_BITS 2048
+#define GENERATED_CERTIFICATE_BITS   2048
 #define GENERATED_CERTIFICATE_SERIAL 0
-#define GENERATED_CERTIFICATE_DAYS 365
-#define GENERATED_CERTIFICATE_NAME (PUINT8) "KVS-WebRTC-Client"
-#define KEYING_EXTRACTOR_LABEL "EXTRACTOR-dtls_srtp"
+#define GENERATED_CERTIFICATE_DAYS   365
+#define GENERATED_CERTIFICATE_NAME   (PUINT8) "KVS-WebRTC-Client"
+#define KEYING_EXTRACTOR_LABEL       "EXTRACTOR-dtls_srtp"
 
 /*
  * DTLS transmission interval timer (in 100ns)
  */
-#define DTLS_TRANSMISSION_INTERVAL          (200 * HUNDREDS_OF_NANOS_IN_A_MILLISECOND)
+#define DTLS_TRANSMISSION_INTERVAL (200 * HUNDREDS_OF_NANOS_IN_A_MILLISECOND)
 
-#define DTLS_SESSION_TIMER_START_DELAY      (100 * HUNDREDS_OF_NANOS_IN_A_MILLISECOND)
+#define DTLS_SESSION_TIMER_START_DELAY (100 * HUNDREDS_OF_NANOS_IN_A_MILLISECOND)
 
-#define SECONDS_IN_A_DAY                    (24 * 60 * 60LL)
+#define SECONDS_IN_A_DAY (24 * 60 * 60LL)
 
-#define LOG_OPENSSL_ERROR(s)                    while ((sslErr = ERR_get_error()) != 0) { \
-                                                    if (sslErr != SSL_ERROR_WANT_WRITE && sslErr != SSL_ERROR_WANT_READ) { \
-                                                        DLOGW("%s failed with %s", (s), ERR_error_string(sslErr, NULL)); \
-                                                    } \
-                                                }
+#define LOG_OPENSSL_ERROR(s)                                                                                                                         \
+    while ((sslErr = ERR_get_error()) != 0) {                                                                                                        \
+        if (sslErr != SSL_ERROR_WANT_WRITE && sslErr != SSL_ERROR_WANT_READ) {                                                                       \
+            DLOGW("%s failed with %s", (s), ERR_error_string(sslErr, NULL));                                                                         \
+        }                                                                                                                                            \
+    }
 
 typedef enum {
-   SRTP_PROFILE_AES128_CM_HMAC_SHA1_80 = SRTP_AES128_CM_SHA1_80,
-   SRTP_PROFILE_AES128_CM_HMAC_SHA1_32 = SRTP_AES128_CM_SHA1_32,
+    SRTP_PROFILE_AES128_CM_HMAC_SHA1_80 = SRTP_AES128_CM_SHA1_80,
+    SRTP_PROFILE_AES128_CM_HMAC_SHA1_32 = SRTP_AES128_CM_SHA1_32,
 } SRTP_PROFILE;
 
 typedef enum {
@@ -64,24 +65,24 @@ typedef struct {
 // DtlsKeyingMaterial is information extracted via https://tools.ietf.org/html/rfc5705
 // also includes the use_srtp value from Handshake
 typedef struct {
-  BYTE clientWriteKey[MAX_SRTP_MASTER_KEY_LEN + MAX_SRTP_SALT_KEY_LEN];
-  BYTE serverWriteKey[MAX_SRTP_MASTER_KEY_LEN + MAX_SRTP_SALT_KEY_LEN];
-  UINT8 key_length;
+    BYTE clientWriteKey[MAX_SRTP_MASTER_KEY_LEN + MAX_SRTP_SALT_KEY_LEN];
+    BYTE serverWriteKey[MAX_SRTP_MASTER_KEY_LEN + MAX_SRTP_SALT_KEY_LEN];
+    UINT8 key_length;
 
-  SRTP_PROFILE srtpProfile;
+    SRTP_PROFILE srtpProfile;
 } DtlsKeyingMaterial, *PDtlsKeyingMaterial;
 
 typedef struct {
     BOOL created;
-    X509 *pCert;
-    EVP_PKEY *pKey;
+    X509* pCert;
+    EVP_PKEY* pKey;
 } DtlsSessionCertificateInfo, *PDtlsSessionCertificateInfo;
 
 typedef struct {
     volatile ATOMIC_BOOL isStarted;
     volatile ATOMIC_BOOL sslInitFinished;
     volatile ATOMIC_BOOL shutdown;
-    SSL_CTX *pSslCtx;
+    SSL_CTX* pSslCtx;
     CHAR certFingerprints[MAX_RTCCONFIGURATION_CERTIFICATES][CERTIFICATE_FINGERPRINT_LENGTH + 1];
     UINT32 certificateCount;
     DtlsSessionCallbacks dtlsSessionCallbacks;
@@ -93,7 +94,7 @@ typedef struct {
     UINT64 dtlsSessionStartTime;
     RTC_DTLS_TRANSPORT_STATE state;
 
-    SSL *pSsl;
+    SSL* pSsl;
     MUTEX sslLock;
 } DtlsSession, *PDtlsSession;
 
@@ -139,13 +140,13 @@ STATUS dtlsSessionOnStateChange(PDtlsSession, UINT64, DtlsSessionOnStateChange);
 STATUS dtlsCheckOutgoingDataBuffer(PDtlsSession);
 STATUS dtlsCertificateFingerprint(X509*, PCHAR);
 STATUS dtlsGenerateCertificateFingerprints(PDtlsSession, PDtlsSessionCertificateInfo);
-STATUS createCertificateAndKey(INT32, BOOL, X509 **ppCert, EVP_PKEY **ppPkey);
-STATUS freeCertificateAndKey(X509 **ppCert, EVP_PKEY **ppPkey);
+STATUS createCertificateAndKey(INT32, BOOL, X509** ppCert, EVP_PKEY** ppPkey);
+STATUS freeCertificateAndKey(X509** ppCert, EVP_PKEY** ppPkey);
 STATUS dtlsValidateRtcCertificates(PRtcCertificate, PUINT32);
 STATUS createSslCtx(PDtlsSessionCertificateInfo, UINT32, SSL_CTX**);
 STATUS dtlsSessionChangeState(PDtlsSession, RTC_DTLS_TRANSPORT_STATE);
 
-#ifdef  __cplusplus
+#ifdef __cplusplus
 }
 #endif
-#endif  //__KINESIS_VIDEO_WEBRTC_CLIENT_DTLS_DTLS__
+#endif //__KINESIS_VIDEO_WEBRTC_CLIENT_DTLS_DTLS__

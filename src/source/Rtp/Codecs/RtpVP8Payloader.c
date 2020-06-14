@@ -2,7 +2,8 @@
 
 #include "../../Include_i.h"
 
-STATUS createPayloadForVP8(UINT32 mtu, PBYTE pData, UINT32 dataLen, PBYTE payloadBuffer, PUINT32 pPayloadLength, PUINT32 pPayloadSubLength, PUINT32 pPayloadSubLenSize)
+STATUS createPayloadForVP8(UINT32 mtu, PBYTE pData, UINT32 dataLen, PBYTE payloadBuffer, PUINT32 pPayloadLength, PUINT32 pPayloadSubLength,
+                           PUINT32 pPayloadSubLenSize)
 {
     ENTERS();
     STATUS retStatus = STATUS_SUCCESS;
@@ -50,8 +51,6 @@ CleanUp:
     return retStatus;
 }
 
-
-
 STATUS depayVP8FromRtpPayload(PBYTE pRawPacket, UINT32 packetLength, PBYTE pVp8Data, PUINT32 pVp8Length, PBOOL pIsStart)
 {
     ENTERS();
@@ -81,7 +80,8 @@ STATUS depayVP8FromRtpPayload(PBYTE pRawPacket, UINT32 packetLength, PBYTE pVp8D
     if (havePictureID) {
         if ((pRawPacket[payloadDescriptorLength] & 0x80) > 0) { // PID is 16bit
             payloadDescriptorLength += 2;
-        } else {
+        }
+        else {
             payloadDescriptorLength++;
         }
     }

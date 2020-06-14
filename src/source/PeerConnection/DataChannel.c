@@ -2,12 +2,13 @@
 
 #include "../Include_i.h"
 
-
-STATUS connectLocalDataChannel() {
+STATUS connectLocalDataChannel()
+{
     return STATUS_SUCCESS;
 }
 
-STATUS createDataChannel(PRtcPeerConnection pPeerConnection, PCHAR pDataChannelName, PRtcDataChannelInit pRtcDataChannelInit, PRtcDataChannel* ppRtcDataChannel)
+STATUS createDataChannel(PRtcPeerConnection pPeerConnection, PCHAR pDataChannelName, PRtcDataChannelInit pRtcDataChannelInit,
+                         PRtcDataChannel* ppRtcDataChannel)
 {
     ENTERS();
     STATUS retStatus = STATUS_SUCCESS;
@@ -23,7 +24,7 @@ STATUS createDataChannel(PRtcPeerConnection pPeerConnection, PCHAR pDataChannelN
     CHK((pKvsDataChannel = (PKvsDataChannel) MEMCALLOC(1, SIZEOF(KvsDataChannel))) != NULL, STATUS_NOT_ENOUGH_MEMORY);
     STRNCPY(pKvsDataChannel->dataChannel.name, pDataChannelName, MAX_DATA_CHANNEL_NAME_LEN);
     pKvsDataChannel->pRtcPeerConnection = (PRtcPeerConnection) pKvsPeerConnection;
-    if(pRtcDataChannelInit != NULL) {
+    if (pRtcDataChannelInit != NULL) {
         // Setting negotiated to false. Not supporting at the moment
         pRtcDataChannelInit->negotiated = FALSE;
         pKvsDataChannel->rtcDataChannelInit = *pRtcDataChannelInit;
@@ -39,7 +40,8 @@ STATUS createDataChannel(PRtcPeerConnection pPeerConnection, PCHAR pDataChannelN
 CleanUp:
     if (STATUS_SUCCEEDED(retStatus)) {
         *ppRtcDataChannel = (PRtcDataChannel) pKvsDataChannel;
-    } else {
+    }
+    else {
         SAFE_MEMFREE(pKvsDataChannel);
     }
 

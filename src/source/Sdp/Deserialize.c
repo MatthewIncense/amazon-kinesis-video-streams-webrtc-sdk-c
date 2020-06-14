@@ -1,16 +1,14 @@
 #define LOG_CLASS "SDP"
 #include "../Include_i.h"
 
-STATUS deserializeVersion(UINT64 version, PCHAR *ppOutputData, PUINT32 pTotalWritten, PUINT32 pBufferSize)
+STATUS deserializeVersion(UINT64 version, PCHAR* ppOutputData, PUINT32 pTotalWritten, PUINT32 pBufferSize)
 {
     ENTERS();
     STATUS retStatus = STATUS_SUCCESS;
     UINT32 currentWriteSize = 0;
 
-    currentWriteSize = SNPRINTF(*ppOutputData,
-                           (*ppOutputData) == NULL ? 0 : *pBufferSize - *pTotalWritten,
-                           SDP_VERSION_MARKER"%" PRIu64 "\n",
-                           version);
+    currentWriteSize =
+        SNPRINTF(*ppOutputData, (*ppOutputData) == NULL ? 0 : *pBufferSize - *pTotalWritten, SDP_VERSION_MARKER "%" PRIu64 "\n", version);
 
     CHK(*ppOutputData == NULL || ((*pBufferSize - *pTotalWritten) >= currentWriteSize), STATUS_BUFFER_TOO_SMALL);
     *pTotalWritten += currentWriteSize;
@@ -24,7 +22,7 @@ CleanUp:
     return retStatus;
 }
 
-STATUS deserializeOrigin(PSdpOrigin pSDPOrigin, PCHAR *ppOutputData, PUINT32 pTotalWritten, PUINT32 pBufferSize)
+STATUS deserializeOrigin(PSdpOrigin pSDPOrigin, PCHAR* ppOutputData, PUINT32 pTotalWritten, PUINT32 pBufferSize)
 {
     ENTERS();
     STATUS retStatus = STATUS_SUCCESS;
@@ -32,28 +30,19 @@ STATUS deserializeOrigin(PSdpOrigin pSDPOrigin, PCHAR *ppOutputData, PUINT32 pTo
 
     CHK(pSDPOrigin != NULL, STATUS_NULL_ARG);
 
-     if (pSDPOrigin->userName[0] != '\0' &&
-         pSDPOrigin->sdpConnectionInformation.connectionAddress[0] != '\0' &&
-         pSDPOrigin->sdpConnectionInformation.connectionAddress[0] != '\0' &&
-         pSDPOrigin->sdpConnectionInformation.connectionAddress[0] != '\0')
-     {
-
-        currentWriteSize = SNPRINTF(*ppOutputData,
-                               (*ppOutputData) == NULL ? 0 : *pBufferSize - *pTotalWritten,
-                               SDP_ORIGIN_MARKER"%s %" PRIu64 " %" PRIu64 " %s %s %s\n",
-                               pSDPOrigin->userName,
-                               pSDPOrigin->sessionId,
-                               pSDPOrigin->sessionVersion,
-                               pSDPOrigin->sdpConnectionInformation.networkType,
-                               pSDPOrigin->sdpConnectionInformation.addressType,
-                               pSDPOrigin->sdpConnectionInformation.connectionAddress);
+    if (pSDPOrigin->userName[0] != '\0' && pSDPOrigin->sdpConnectionInformation.connectionAddress[0] != '\0' &&
+        pSDPOrigin->sdpConnectionInformation.connectionAddress[0] != '\0' && pSDPOrigin->sdpConnectionInformation.connectionAddress[0] != '\0') {
+        currentWriteSize = SNPRINTF(*ppOutputData, (*ppOutputData) == NULL ? 0 : *pBufferSize - *pTotalWritten,
+                                    SDP_ORIGIN_MARKER "%s %" PRIu64 " %" PRIu64 " %s %s %s\n", pSDPOrigin->userName, pSDPOrigin->sessionId,
+                                    pSDPOrigin->sessionVersion, pSDPOrigin->sdpConnectionInformation.networkType,
+                                    pSDPOrigin->sdpConnectionInformation.addressType, pSDPOrigin->sdpConnectionInformation.connectionAddress);
 
         CHK(*ppOutputData == NULL || ((*pBufferSize - *pTotalWritten) >= currentWriteSize), STATUS_BUFFER_TOO_SMALL);
         *pTotalWritten += currentWriteSize;
         if (*ppOutputData != NULL) {
             *ppOutputData += currentWriteSize;
         }
-     }
+    }
 
 CleanUp:
 
@@ -61,17 +50,15 @@ CleanUp:
     return retStatus;
 }
 
-STATUS deserializeSessionName(PCHAR sessionName, PCHAR *ppOutputData, PUINT32 pTotalWritten, PUINT32 pBufferSize)
+STATUS deserializeSessionName(PCHAR sessionName, PCHAR* ppOutputData, PUINT32 pTotalWritten, PUINT32 pBufferSize)
 {
     ENTERS();
     STATUS retStatus = STATUS_SUCCESS;
     UINT32 currentWriteSize = 0;
 
     if (sessionName[0] != '\0') {
-        currentWriteSize = SNPRINTF(*ppOutputData,
-                               (*ppOutputData) == NULL ? 0 : *pBufferSize - *pTotalWritten,
-                               SDP_SESSION_NAME_MARKER"%s\n",
-                               sessionName);
+        currentWriteSize =
+            SNPRINTF(*ppOutputData, (*ppOutputData) == NULL ? 0 : *pBufferSize - *pTotalWritten, SDP_SESSION_NAME_MARKER "%s\n", sessionName);
 
         CHK(*ppOutputData == NULL || ((*pBufferSize - *pTotalWritten) >= currentWriteSize), STATUS_BUFFER_TOO_SMALL);
         *pTotalWritten += currentWriteSize;
@@ -86,17 +73,15 @@ CleanUp:
     return retStatus;
 }
 
-STATUS deserializeTimeDescription(PSdpTimeDescription pSDPTimeDescription, PCHAR *ppOutputData, PUINT32 pTotalWritten, PUINT32 pBufferSize)
+STATUS deserializeTimeDescription(PSdpTimeDescription pSDPTimeDescription, PCHAR* ppOutputData, PUINT32 pTotalWritten, PUINT32 pBufferSize)
 {
     ENTERS();
     STATUS retStatus = STATUS_SUCCESS;
     UINT32 currentWriteSize = 0;
 
-    currentWriteSize = SNPRINTF(*ppOutputData,
-                           (*ppOutputData) == NULL ? 0 : *pBufferSize - *pTotalWritten,
-                           SDP_TIME_DESCRIPTION_MARKER"%" PRIu64 " %" PRIu64 "\n",
-                           pSDPTimeDescription->startTime,
-                           pSDPTimeDescription->stopTime);
+    currentWriteSize =
+        SNPRINTF(*ppOutputData, (*ppOutputData) == NULL ? 0 : *pBufferSize - *pTotalWritten, SDP_TIME_DESCRIPTION_MARKER "%" PRIu64 " %" PRIu64 "\n",
+                 pSDPTimeDescription->startTime, pSDPTimeDescription->stopTime);
 
     *pTotalWritten += currentWriteSize;
     if (*ppOutputData != NULL) {
@@ -107,23 +92,19 @@ STATUS deserializeTimeDescription(PSdpTimeDescription pSDPTimeDescription, PCHAR
     return retStatus;
 }
 
-STATUS deserializeAttribute(PSdpAttributes pSDPAttributes, PCHAR *ppOutputData, PUINT32 pTotalWritten, PUINT32 pBufferSize)
+STATUS deserializeAttribute(PSdpAttributes pSDPAttributes, PCHAR* ppOutputData, PUINT32 pTotalWritten, PUINT32 pBufferSize)
 {
     ENTERS();
     STATUS retStatus = STATUS_SUCCESS;
     UINT32 currentWriteSize = 0;
 
     if (pSDPAttributes->attributeValue[0] == '\0') {
-        currentWriteSize = SNPRINTF(*ppOutputData,
-                               (*ppOutputData) == NULL ? 0 : *pBufferSize - *pTotalWritten,
-                               SDP_ATTRIBUTE_MARKER"%s\n",
-                               pSDPAttributes->attributeName);
-    } else {
-        currentWriteSize = snprintf(*ppOutputData,
-                               (*ppOutputData) == NULL ? 0 : *pBufferSize - *pTotalWritten,
-                               SDP_ATTRIBUTE_MARKER"%s:%s\n",
-                               pSDPAttributes->attributeName,
-                               pSDPAttributes->attributeValue);
+        currentWriteSize = SNPRINTF(*ppOutputData, (*ppOutputData) == NULL ? 0 : *pBufferSize - *pTotalWritten, SDP_ATTRIBUTE_MARKER "%s\n",
+                                    pSDPAttributes->attributeName);
+    }
+    else {
+        currentWriteSize = snprintf(*ppOutputData, (*ppOutputData) == NULL ? 0 : *pBufferSize - *pTotalWritten, SDP_ATTRIBUTE_MARKER "%s:%s\n",
+                                    pSDPAttributes->attributeName, pSDPAttributes->attributeValue);
     }
 
     *pTotalWritten += currentWriteSize;
@@ -135,17 +116,15 @@ STATUS deserializeAttribute(PSdpAttributes pSDPAttributes, PCHAR *ppOutputData, 
     return retStatus;
 }
 
-STATUS deserializeMediaName(PCHAR pMediaName, PCHAR *ppOutputData, PUINT32 pTotalWritten, PUINT32 pBufferSize)
+STATUS deserializeMediaName(PCHAR pMediaName, PCHAR* ppOutputData, PUINT32 pTotalWritten, PUINT32 pBufferSize)
 {
     ENTERS();
     STATUS retStatus = STATUS_SUCCESS;
     UINT32 currentWriteSize = 0;
 
     if (pMediaName[0] != '\0') {
-        currentWriteSize = snprintf(*ppOutputData,
-                               (*ppOutputData) == NULL ? 0 : *pBufferSize - *pTotalWritten,
-                               SDP_MEDIA_NAME_MARKER"%s\n",
-                               pMediaName);
+        currentWriteSize =
+            snprintf(*ppOutputData, (*ppOutputData) == NULL ? 0 : *pBufferSize - *pTotalWritten, SDP_MEDIA_NAME_MARKER "%s\n", pMediaName);
 
         CHK(*ppOutputData == NULL || ((*pBufferSize - *pTotalWritten) >= currentWriteSize), STATUS_BUFFER_TOO_SMALL);
         *pTotalWritten += currentWriteSize;
@@ -160,19 +139,17 @@ CleanUp:
     return retStatus;
 }
 
-STATUS deserializeMediaConnectionInformation(PSdpConnectionInformation pSdpConnectionInformation, PCHAR *ppOutputData, PUINT32 pTotalWritten, PUINT32 pBufferSize)
+STATUS deserializeMediaConnectionInformation(PSdpConnectionInformation pSdpConnectionInformation, PCHAR* ppOutputData, PUINT32 pTotalWritten,
+                                             PUINT32 pBufferSize)
 {
     ENTERS();
     STATUS retStatus = STATUS_SUCCESS;
     UINT32 currentWriteSize = 0;
 
     if (pSdpConnectionInformation->networkType[0] != '\0') {
-        currentWriteSize = SNPRINTF(*ppOutputData,
-                               (*ppOutputData) == NULL ? 0 : *pBufferSize - *pTotalWritten,
-                               SDP_CONNECTION_INFORMATION_MARKER"%s %s %s\n",
-                               pSdpConnectionInformation->networkType,
-                               pSdpConnectionInformation->addressType,
-                               pSdpConnectionInformation->connectionAddress);
+        currentWriteSize =
+            SNPRINTF(*ppOutputData, (*ppOutputData) == NULL ? 0 : *pBufferSize - *pTotalWritten, SDP_CONNECTION_INFORMATION_MARKER "%s %s %s\n",
+                     pSdpConnectionInformation->networkType, pSdpConnectionInformation->addressType, pSdpConnectionInformation->connectionAddress);
 
         CHK(*ppOutputData == NULL || ((*pBufferSize - *pTotalWritten) >= currentWriteSize), STATUS_BUFFER_TOO_SMALL);
         *pTotalWritten += currentWriteSize;
@@ -186,7 +163,6 @@ CleanUp:
     LEAVES();
     return retStatus;
 }
-
 
 STATUS deserializeSessionDescription(PSessionDescription pSessionDescription, PCHAR sdpBytes, PUINT32 sdpBytesLength)
 {
@@ -212,7 +188,8 @@ STATUS deserializeSessionDescription(PSessionDescription pSessionDescription, PC
 
     for (i = 0; i < pSessionDescription->mediaCount; i++) {
         CHK_STATUS(deserializeMediaName(pSessionDescription->mediaDescriptions[i].mediaName, &curr, sdpBytesLength, &bufferSize));
-        CHK_STATUS(deserializeMediaConnectionInformation(&(pSessionDescription->mediaDescriptions[i].sdpConnectionInformation), &curr, sdpBytesLength, &bufferSize));
+        CHK_STATUS(deserializeMediaConnectionInformation(&(pSessionDescription->mediaDescriptions[i].sdpConnectionInformation), &curr, sdpBytesLength,
+                                                         &bufferSize));
         for (j = 0; j < pSessionDescription->mediaDescriptions[i].mediaAttributesCount; j++) {
             CHK_STATUS(deserializeAttribute(&pSessionDescription->mediaDescriptions[i].sdpAttributes[j], &curr, sdpBytesLength, &bufferSize));
         }

@@ -2,9 +2,8 @@
 
 #include "../Include_i.h"
 
-STATUS createJitterBuffer(FrameReadyFunc onFrameReadyFunc, FrameDroppedFunc onFrameDroppedFunc,
-                          DepayRtpPayloadFunc depayRtpPayloadFunc, UINT32 maxLatency, UINT32 clockRate,
-                          UINT64 customData, PJitterBuffer* ppJitterBuffer)
+STATUS createJitterBuffer(FrameReadyFunc onFrameReadyFunc, FrameDroppedFunc onFrameDroppedFunc, DepayRtpPayloadFunc depayRtpPayloadFunc,
+                          UINT32 maxLatency, UINT32 clockRate, UINT64 customData, PJitterBuffer* ppJitterBuffer)
 {
     ENTERS();
     STATUS retStatus = STATUS_SUCCESS;
@@ -83,8 +82,9 @@ STATUS jitterBufferPush(PJitterBuffer pJitterBuffer, PRtpPacket pRtpPacket)
 
     CHK(pJitterBuffer != NULL && pJitterBuffer->pktBuffer != NULL && pRtpPacket != NULL, STATUS_NULL_ARG);
 
-    if (!pJitterBuffer->started || (pJitterBuffer->lastPopTimestamp == pRtpPacket->header.sequenceNumber
-        && pJitterBuffer->lastRemovedSequenceNumber >= pRtpPacket->header.sequenceNumber)) {
+    if (!pJitterBuffer->started ||
+        (pJitterBuffer->lastPopTimestamp == pRtpPacket->header.sequenceNumber &&
+         pJitterBuffer->lastRemovedSequenceNumber >= pRtpPacket->header.sequenceNumber)) {
         // Set to started and initialize the sequence number
         pJitterBuffer->started = TRUE;
         pJitterBuffer->lastRemovedSequenceNumber = UINT16_DEC(pRtpPacket->header.sequenceNumber);
@@ -94,8 +94,8 @@ STATUS jitterBufferPush(PJitterBuffer pJitterBuffer, PRtpPacket pRtpPacket)
         pJitterBuffer->lastPushTimestamp = pRtpPacket->header.timestamp;
     }
 
-    if ((pRtpPacket->header.timestamp < pJitterBuffer->maxLatency && pJitterBuffer->lastPushTimestamp <= pJitterBuffer->maxLatency)
-        || pRtpPacket->header.timestamp >= pJitterBuffer->lastPushTimestamp - pJitterBuffer->maxLatency) {
+    if ((pRtpPacket->header.timestamp < pJitterBuffer->maxLatency && pJitterBuffer->lastPushTimestamp <= pJitterBuffer->maxLatency) ||
+        pRtpPacket->header.timestamp >= pJitterBuffer->lastPushTimestamp - pJitterBuffer->maxLatency) {
         pCurPacket = pJitterBuffer->pktBuffer[pRtpPacket->header.sequenceNumber];
         if (pCurPacket != NULL) {
             freeRtpPacket(&pCurPacket);
@@ -104,7 +104,8 @@ STATUS jitterBufferPush(PJitterBuffer pJitterBuffer, PRtpPacket pRtpPacket)
         pJitterBuffer->pktBuffer[pRtpPacket->header.sequenceNumber] = pRtpPacket;
         pJitterBuffer->lastPopTimestamp = MIN(pJitterBuffer->lastPopTimestamp, pRtpPacket->header.timestamp);
         DLOGS("jitterBufferPush get packet timestamp %lu seqNum %lu", pRtpPacket->header.timestamp, pRtpPacket->header.sequenceNumber);
-    } else {
+    }
+    else {
         // Free the packet if it is out of range, jitter buffer need to own the packet and do free
         freeRtpPacket(&pRtpPacket);
     }
@@ -134,7 +135,8 @@ STATUS jitterBufferPop(PJitterBuffer pJitterBuffer, BOOL bufferClosed)
     BOOL isStart = FALSE, containStartForEarliestFrame = FALSE;
     UINT16 lastNonNullIndex = 0;
 
-    CHK(pJitterBuffer != NULL && pJitterBuffer->pktBuffer != NULL && pJitterBuffer->onFrameDroppedFn != NULL && pJitterBuffer->onFrameReadyFn != NULL, STATUS_NULL_ARG);
+    CHK(pJitterBuffer != NULL && pJitterBuffer->pktBuffer != NULL && pJitterBuffer->onFrameDroppedFn != NULL && pJitterBuffer->onFrameReadyFn != NULL,
+        STATUS_NULL_ARG);
     CHK(pJitterBuffer->lastPushTimestamp != 0, retStatus);
 
     if (pJitterBuffer->lastPushTimestamp > pJitterBuffer->maxLatency) {
@@ -148,37 +150,34 @@ STATUS jitterBufferPop(PJitterBuffer pJitterBuffer, BOOL bufferClosed)
         if (pJitterBuffer->pktBuffer[index] == NULL) {
             isFrameDataContinuous = FALSE;
             CHK(pJitterBuffer->lastPopTimestamp < earliestTimestamp || bufferClosed, retStatus);
-        } else {
+        }
+        else {
             lastNonNullIndex = index;
             curTimestamp = pJitterBuffer->pktBuffer[index]->header.timestamp;
             if (curTimestamp != pJitterBuffer->lastPopTimestamp) {
                 if (pJitterBuffer->lastPopTimestamp < earliestTimestamp || bufferClosed) {
                     if (containStartForEarliestFrame && isFrameDataContinuous) {
                         // TODO: if switch to curBuffer, need to carefully calculate ptr of UINT16_DEC(index) as it is a circulate buffer
-                        CHK_STATUS(pJitterBuffer->onFrameReadyFn(pJitterBuffer->customData, startDropIndex,
-                                                                 UINT16_DEC(index), curFrameSize));
-                        CHK_STATUS(jitterBufferDropBufferData(pJitterBuffer, startDropIndex, UINT16_DEC(index),
-                                                              curTimestamp));
+                        CHK_STATUS(pJitterBuffer->onFrameReadyFn(pJitterBuffer->customData, startDropIndex, UINT16_DEC(index), curFrameSize));
+                        CHK_STATUS(jitterBufferDropBufferData(pJitterBuffer, startDropIndex, UINT16_DEC(index), curTimestamp));
                         curFrameSize = 0;
                         containStartForEarliestFrame = FALSE;
-                    } else {
-                        CHK_STATUS(pJitterBuffer->onFrameDroppedFn(pJitterBuffer->customData,
-                                                                   pJitterBuffer->lastPopTimestamp));
-                        CHK_STATUS(jitterBufferDropBufferData(pJitterBuffer, startDropIndex, UINT16_DEC(index),
-                                                              curTimestamp));
+                    }
+                    else {
+                        CHK_STATUS(pJitterBuffer->onFrameDroppedFn(pJitterBuffer->customData, pJitterBuffer->lastPopTimestamp));
+                        CHK_STATUS(jitterBufferDropBufferData(pJitterBuffer, startDropIndex, UINT16_DEC(index), curTimestamp));
                         curFrameSize = 0;
                         isFrameDataContinuous = TRUE;
                     }
                     startDropIndex = index;
-                } else {
+                }
+                else {
                     if (containStartForEarliestFrame) {
                         CHK(!bufferClosed, retStatus);
                         if (isFrameDataContinuous) {
                             // TODO: if switch to curBuffer, need to carefully calculate ptr of UINT16_DEC(index) as it is a circulate buffer
-                            CHK_STATUS(pJitterBuffer->onFrameReadyFn(pJitterBuffer->customData, startDropIndex,
-                                                                     UINT16_DEC(index), curFrameSize));
-                            CHK_STATUS(jitterBufferDropBufferData(pJitterBuffer, startDropIndex, UINT16_DEC(index),
-                                                                  curTimestamp));
+                            CHK_STATUS(pJitterBuffer->onFrameReadyFn(pJitterBuffer->customData, startDropIndex, UINT16_DEC(index), curFrameSize));
+                            CHK_STATUS(jitterBufferDropBufferData(pJitterBuffer, startDropIndex, UINT16_DEC(index), curTimestamp));
                             startDropIndex = index;
                             curFrameSize = 0;
                         }
@@ -187,8 +186,7 @@ STATUS jitterBufferPop(PJitterBuffer pJitterBuffer, BOOL bufferClosed)
                 }
             }
 
-            CHK_STATUS(pJitterBuffer->depayPayloadFn(pJitterBuffer->pktBuffer[index]->payload,
-                                                     pJitterBuffer->pktBuffer[index]->payloadLength, NULL,
+            CHK_STATUS(pJitterBuffer->depayPayloadFn(pJitterBuffer->pktBuffer[index]->payload, pJitterBuffer->pktBuffer[index]->payloadLength, NULL,
                                                      &partialFrameSize, &isStart));
             curFrameSize += partialFrameSize;
             if (isStart && pJitterBuffer->lastPopTimestamp == curTimestamp) {
@@ -201,9 +199,8 @@ STATUS jitterBufferPop(PJitterBuffer pJitterBuffer, BOOL bufferClosed)
     if (bufferClosed && curFrameSize > 0) {
         curFrameSize = 0;
         for (index = startDropIndex; UINT16_DEC(index) != lastNonNullIndex && pJitterBuffer->pktBuffer[index] != NULL; index++) {
-            CHK_STATUS(pJitterBuffer->depayPayloadFn(pJitterBuffer->pktBuffer[index]->payload,
-                    pJitterBuffer->pktBuffer[index]->payloadLength, NULL,
-                    &partialFrameSize, NULL));
+            CHK_STATUS(pJitterBuffer->depayPayloadFn(pJitterBuffer->pktBuffer[index]->payload, pJitterBuffer->pktBuffer[index]->payloadLength, NULL,
+                                                     &partialFrameSize, NULL));
             curFrameSize += partialFrameSize;
         }
 
@@ -211,7 +208,8 @@ STATUS jitterBufferPop(PJitterBuffer pJitterBuffer, BOOL bufferClosed)
         if (UINT16_DEC(index) == lastNonNullIndex) {
             CHK_STATUS(pJitterBuffer->onFrameReadyFn(pJitterBuffer->customData, startDropIndex, lastNonNullIndex, curFrameSize));
             CHK_STATUS(jitterBufferDropBufferData(pJitterBuffer, startDropIndex, lastNonNullIndex, pJitterBuffer->lastPopTimestamp));
-        } else {
+        }
+        else {
             CHK_STATUS(pJitterBuffer->onFrameDroppedFn(pJitterBuffer->customData, pJitterBuffer->lastPopTimestamp));
             CHK_STATUS(jitterBufferDropBufferData(pJitterBuffer, startDropIndex, lastNonNullIndex, pJitterBuffer->lastPopTimestamp));
         }

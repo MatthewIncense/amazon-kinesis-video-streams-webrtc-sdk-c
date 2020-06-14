@@ -16,7 +16,7 @@ STATUS createTransactionIdStore(UINT32 maxIdCount, PTransactionIdStore* ppTransa
     pTransactionIdStore = (PTransactionIdStore) MEMCALLOC(1, SIZEOF(TransactionIdStore) + STUN_TRANSACTION_ID_LEN * maxIdCount);
     CHK(pTransactionIdStore != NULL, STATUS_NOT_ENOUGH_MEMORY);
 
-    pTransactionIdStore->transactionIds = (PBYTE) (pTransactionIdStore + 1);
+    pTransactionIdStore->transactionIds = (PBYTE)(pTransactionIdStore + 1);
     pTransactionIdStore->maxTransactionIdsCount = maxIdCount;
 
 CleanUp:
@@ -60,13 +60,14 @@ VOID transactionIdStoreInsert(PTransactionIdStore pTransactionIdStore, PBYTE tra
     CHECK(pTransactionIdStore != NULL);
 
     storeLocation = pTransactionIdStore->transactionIds +
-            ((pTransactionIdStore->nextTransactionIdIndex % pTransactionIdStore->maxTransactionIdsCount) * STUN_TRANSACTION_ID_LEN);
+        ((pTransactionIdStore->nextTransactionIdIndex % pTransactionIdStore->maxTransactionIdsCount) * STUN_TRANSACTION_ID_LEN);
     MEMCPY(storeLocation, transactionId, STUN_TRANSACTION_ID_LEN);
 
     pTransactionIdStore->nextTransactionIdIndex = (pTransactionIdStore->nextTransactionIdIndex + 1) % pTransactionIdStore->maxTransactionIdsCount;
 
     if (pTransactionIdStore->nextTransactionIdIndex == pTransactionIdStore->earliestTransactionIdIndex) {
-        pTransactionIdStore->earliestTransactionIdIndex = (pTransactionIdStore->earliestTransactionIdIndex + 1) % pTransactionIdStore->maxTransactionIdsCount;
+        pTransactionIdStore->earliestTransactionIdIndex =
+            (pTransactionIdStore->earliestTransactionIdIndex + 1) % pTransactionIdStore->maxTransactionIdsCount;
     }
 
     pTransactionIdStore->transactionIdCount = MIN(pTransactionIdStore->transactionIdCount + 1, pTransactionIdStore->maxTransactionIdsCount);
@@ -79,7 +80,7 @@ BOOL transactionIdStoreHasId(PTransactionIdStore pTransactionIdStore, PBYTE tran
 
     CHECK(pTransactionIdStore != NULL);
 
-    for(i = pTransactionIdStore->earliestTransactionIdIndex, j = 0; j < pTransactionIdStore->maxTransactionIdsCount && !idFound; ++j) {
+    for (i = pTransactionIdStore->earliestTransactionIdIndex, j = 0; j < pTransactionIdStore->maxTransactionIdsCount && !idFound; ++j) {
         if (MEMCMP(transactionId, pTransactionIdStore->transactionIds + i * STUN_TRANSACTION_ID_LEN, STUN_TRANSACTION_ID_LEN) == 0) {
             idFound = TRUE;
         }
@@ -107,8 +108,8 @@ STATUS iceUtilsGenerateTransactionId(PBYTE pBuffer, UINT32 bufferLen)
     CHK(pBuffer != NULL, STATUS_NULL_ARG);
     CHK(bufferLen == STUN_TRANSACTION_ID_LEN, STATUS_INVALID_ARG);
 
-    for(i = 0; i < STUN_TRANSACTION_ID_LEN; ++i) {
-        pBuffer[i] = ((BYTE) (RAND() % 0x100));
+    for (i = 0; i < STUN_TRANSACTION_ID_LEN; ++i) {
+        pBuffer[i] = ((BYTE)(RAND() % 0x100));
     }
 
 CleanUp:
@@ -116,8 +117,7 @@ CleanUp:
     return retStatus;
 }
 
-STATUS iceUtilsPackageStunPacket(PStunPacket pStunPacket, PBYTE password, UINT32 passwordLen,
-                         PBYTE pBuffer, PUINT32 pBufferLen)
+STATUS iceUtilsPackageStunPacket(PStunPacket pStunPacket, PBYTE password, UINT32 passwordLen, PBYTE pBuffer, PUINT32 pBufferLen)
 {
     STATUS retStatus = STATUS_SUCCESS;
     UINT32 stunPacketSize = 0;
@@ -142,9 +142,8 @@ CleanUp:
     return retStatus;
 }
 
-STATUS iceUtilsSendStunPacket(PStunPacket pStunPacket, PBYTE password, UINT32 passwordLen,
-                              PKvsIpAddress pDest, PSocketConnection pSocketConnection, PTurnConnection pTurnConnection,
-                              BOOL useTurn)
+STATUS iceUtilsSendStunPacket(PStunPacket pStunPacket, PBYTE password, UINT32 passwordLen, PKvsIpAddress pDest, PSocketConnection pSocketConnection,
+                              PTurnConnection pTurnConnection, BOOL useTurn)
 {
     STATUS retStatus = STATUS_SUCCESS;
     UINT32 stunPacketSize = STUN_PACKET_ALLOCATION_SIZE;
@@ -160,8 +159,7 @@ CleanUp:
     return retStatus;
 }
 
-STATUS iceUtilsSendData(PBYTE buffer, UINT32 size,
-                        PKvsIpAddress pDest, PSocketConnection pSocketConnection, PTurnConnection pTurnConnection,
+STATUS iceUtilsSendData(PBYTE buffer, UINT32 size, PKvsIpAddress pDest, PSocketConnection pSocketConnection, PTurnConnection pTurnConnection,
                         BOOL useTurn)
 {
     STATUS retStatus = STATUS_SUCCESS;
@@ -170,7 +168,8 @@ STATUS iceUtilsSendData(PBYTE buffer, UINT32 size,
 
     if (useTurn) {
         retStatus = turnConnectionSendData(pTurnConnection, buffer, size, pDest);
-    } else {
+    }
+    else {
         retStatus = socketConnectionSendData(pSocketConnection, buffer, size, pDest);
     }
 
@@ -198,8 +197,9 @@ STATUS parseIceServer(PIceServer pIceServer, PCHAR url, PCHAR username, PCHAR cr
     if (STRNCMP(ICE_URL_PREFIX_STUN, url, STRLEN(ICE_URL_PREFIX_STUN)) == 0) {
         urlNoPrefix = STRCHR(url, ':') + 1;
         pIceServer->isTurn = FALSE;
-    } else if (STRNCMP(ICE_URL_PREFIX_TURN, url, STRLEN(ICE_URL_PREFIX_TURN)) == 0 ||
-               STRNCMP(ICE_URL_PREFIX_TURN_SECURE, url, STRLEN(ICE_URL_PREFIX_TURN_SECURE)) == 0) {
+    }
+    else if (STRNCMP(ICE_URL_PREFIX_TURN, url, STRLEN(ICE_URL_PREFIX_TURN)) == 0 ||
+             STRNCMP(ICE_URL_PREFIX_TURN_SECURE, url, STRLEN(ICE_URL_PREFIX_TURN_SECURE)) == 0) {
         CHK(username != NULL && username[0] != '\0', STATUS_ICE_URL_TURN_MISSING_USERNAME);
         CHK(credential != NULL && credential[0] != '\0', STATUS_ICE_URL_TURN_MISSING_CREDENTIAL);
 
@@ -213,11 +213,12 @@ STATUS parseIceServer(PIceServer pIceServer, PCHAR url, PCHAR username, PCHAR cr
         pIceServer->transport = KVS_SOCKET_PROTOCOL_NONE;
         if (STRSTR(url, ICE_URL_TRANSPORT_UDP) != NULL) {
             pIceServer->transport = KVS_SOCKET_PROTOCOL_UDP;
-        } else if (STRSTR(url, ICE_URL_TRANSPORT_TCP) != NULL) {
+        }
+        else if (STRSTR(url, ICE_URL_TRANSPORT_TCP) != NULL) {
             pIceServer->transport = KVS_SOCKET_PROTOCOL_TCP;
         }
-
-    } else {
+    }
+    else {
         CHK(FALSE, STATUS_ICE_URL_INVALID_PREFIX);
     }
 
@@ -228,7 +229,8 @@ STATUS parseIceServer(PIceServer pIceServer, PCHAR url, PCHAR username, PCHAR cr
         STRNCPY(pIceServer->url, urlNoPrefix, separator - urlNoPrefix - 1);
         // need to null terminate since we are not copying the entire urlNoPrefix
         pIceServer->url[separator - urlNoPrefix - 1] = '\0';
-    } else {
+    }
+    else {
         STRNCPY(pIceServer->url, urlNoPrefix, MAX_ICE_CONFIG_URI_LEN);
     }
 

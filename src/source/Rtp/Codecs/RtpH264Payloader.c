@@ -2,7 +2,8 @@
 
 #include "../../Include_i.h"
 
-STATUS createPayloadForH264(UINT32 mtu, PBYTE nalus, UINT32 nalusLength, PBYTE payloadBuffer, PUINT32 pPayloadLength, PUINT32 pPayloadSubLength, PUINT32 pPayloadSubLenSize)
+STATUS createPayloadForH264(UINT32 mtu, PBYTE nalus, UINT32 nalusLength, PBYTE payloadBuffer, PUINT32 pPayloadLength, PUINT32 pPayloadSubLength,
+                            PUINT32 pPayloadSubLenSize)
 {
     ENTERS();
     STATUS retStatus = STATUS_SUCCESS;
@@ -18,13 +19,13 @@ STATUS createPayloadForH264(UINT32 mtu, PBYTE nalus, UINT32 nalusLength, PBYTE p
     CHK(nalus != NULL && pPayloadSubLenSize != NULL && pPayloadLength != NULL && (sizeCalculationOnly || pPayloadSubLength != NULL), STATUS_NULL_ARG);
     CHK(mtu > FU_A_HEADER_SIZE, STATUS_RTP_INPUT_MTU_TOO_SMALL);
 
-    if (sizeCalculationOnly)
-    {
+    if (sizeCalculationOnly) {
         payloadArray.payloadLength = 0;
         payloadArray.payloadSubLenSize = 0;
         payloadArray.maxPayloadLength = 0;
         payloadArray.maxPayloadSubLenSize = 0;
-    } else {
+    }
+    else {
         payloadArray.payloadLength = *pPayloadLength;
         payloadArray.payloadSubLenSize = *pPayloadSubLenSize;
         payloadArray.maxPayloadLength = *pPayloadLength;
@@ -33,8 +34,7 @@ STATUS createPayloadForH264(UINT32 mtu, PBYTE nalus, UINT32 nalusLength, PBYTE p
     payloadArray.payloadBuffer = payloadBuffer;
     payloadArray.payloadSubLength = pPayloadSubLength;
 
-    do
-    {
+    do {
         CHK_STATUS(getNextNaluLength(curPtrInNalus, remainNalusLength, &startIndex, &nextNaluLength));
 
         curPtrInNalus += startIndex;
@@ -43,12 +43,12 @@ STATUS createPayloadForH264(UINT32 mtu, PBYTE nalus, UINT32 nalusLength, PBYTE p
 
         CHK(remainNalusLength != 0, retStatus);
 
-        if (sizeCalculationOnly)
-        {
+        if (sizeCalculationOnly) {
             CHK_STATUS(createPayloadFromNalu(mtu, curPtrInNalus, nextNaluLength, NULL, &singlePayloadLength, &singlePayloadSubLenSize));
             payloadArray.payloadLength += singlePayloadLength;
             payloadArray.payloadSubLenSize += singlePayloadSubLenSize;
-        } else {
+        }
+        else {
             CHK_STATUS(createPayloadFromNalu(mtu, curPtrInNalus, nextNaluLength, &payloadArray, &singlePayloadLength, &singlePayloadSubLenSize));
             payloadArray.payloadBuffer += singlePayloadLength;
             payloadArray.payloadSubLength += singlePayloadSubLenSize;
@@ -87,7 +87,8 @@ STATUS getNextNaluLength(PBYTE nalus, UINT32 nalusLength, PUINT32 pStart, PUINT3
     CHK(nalus != NULL && pStart != NULL && pNaluLength != NULL, STATUS_NULL_ARG);
 
     // Annex-B Nalu will have 0x000000001 or 0x000001 start code, at most 4 bytes
-    for (offset = 0; offset < 4 && offset < nalusLength && nalus[offset] == 0; offset++);
+    for (offset = 0; offset < 4 && offset < nalusLength && nalus[offset] == 0; offset++)
+        ;
 
     CHK(offset < nalusLength && offset < 4 && offset >= 2 && nalus[offset] == 1, STATUS_RTP_INVALID_NALU);
     *pStart = ++offset;
@@ -95,13 +96,13 @@ STATUS getNextNaluLength(PBYTE nalus, UINT32 nalusLength, PUINT32 pStart, PUINT3
 
     /* Not doing validation on number of consecutive zeros being less than 4 because some device can produce
      * data with trailing zeros. */
-    while(offset < nalusLength) {
+    while (offset < nalusLength) {
         if (*pCurrent == 0) {
             /* Maybe next byte is 1 */
             offset++;
             pCurrent++;
-
-        } else if (*pCurrent == 1) {
+        }
+        else if (*pCurrent == 1) {
             if (*(pCurrent - 1) == 0 && *(pCurrent - 2) == 0) {
                 zeroCount = *(pCurrent - 3) == 0 ? 3 : 2;
                 naluFound = TRUE;
@@ -112,14 +113,14 @@ STATUS getNextNaluLength(PBYTE nalus, UINT32 nalusLength, PUINT32 pStart, PUINT3
              * All the 0's must be after this '1' matched at offset */
             offset += 3;
             pCurrent += 3;
-        } else {
-
+        }
+        else {
             /* Can jump 3 bytes forward */
             offset += 3;
             pCurrent += 3;
         }
     }
-    *pNaluLength = MIN(offset, nalusLength) - *pStart - (naluFound? zeroCount : 0);
+    *pNaluLength = MIN(offset, nalusLength) - *pStart - (naluFound ? zeroCount : 0);
 
 CleanUp:
 
@@ -153,28 +154,28 @@ STATUS createPayloadFromNalu(UINT32 mtu, PBYTE nalu, UINT32 naluLength, PPayload
     CHK(mtu > FU_A_HEADER_SIZE, STATUS_RTP_INPUT_MTU_TOO_SMALL);
 
     // https://yumichan.net/video-processing/video-compression/introduction-to-h264-nal-unit/
-    naluType = *nalu & 0x1F; // last 5 bits
+    naluType = *nalu & 0x1F;   // last 5 bits
     naluRefIdc = *nalu & 0x60; // 2 bits higher than naluType
 
     if (!sizeCalculationOnly) {
         pPayload = pPayloadArray->payloadBuffer;
     }
 
-    if (naluLength <= mtu)
-    {
+    if (naluLength <= mtu) {
         payloadLength += naluLength;
         payloadSubLenSize++;
 
-        if (!sizeCalculationOnly)
-        {
-            CHK(payloadSubLenSize <= pPayloadArray->maxPayloadSubLenSize && payloadLength <= pPayloadArray->maxPayloadLength, STATUS_BUFFER_TOO_SMALL);
+        if (!sizeCalculationOnly) {
+            CHK(payloadSubLenSize <= pPayloadArray->maxPayloadSubLenSize && payloadLength <= pPayloadArray->maxPayloadLength,
+                STATUS_BUFFER_TOO_SMALL);
 
             // Single NALU https://tools.ietf.org/html/rfc6184#section-5.6
             MEMCPY(pPayload, nalu, naluLength);
             pPayloadArray->payloadSubLength[payloadSubLenSize - 1] = naluLength;
             pPayload += pPayloadArray->payloadSubLength[payloadSubLenSize - 1];
         }
-    } else {
+    }
+    else {
         // FU-A https://tools.ietf.org/html/rfc6184#section-5.8
         maxPayloadSize = mtu - FU_A_HEADER_SIZE;
 
@@ -182,15 +183,14 @@ STATUS createPayloadFromNalu(UINT32 mtu, PBYTE nalu, UINT32 naluLength, PPayload
         remainingNaluLength--;
         pCurPtrInNalu = nalu + 1;
 
-        while (remainingNaluLength != 0)
-        {
+        while (remainingNaluLength != 0) {
             curPayloadSize = MIN(maxPayloadSize, remainingNaluLength);
             payloadSubLenSize++;
             payloadLength += FU_A_HEADER_SIZE + curPayloadSize;
 
-            if (!sizeCalculationOnly)
-            {
-                CHK(payloadSubLenSize <= pPayloadArray->maxPayloadSubLenSize && payloadLength <= pPayloadArray->maxPayloadLength, STATUS_BUFFER_TOO_SMALL);
+            if (!sizeCalculationOnly) {
+                CHK(payloadSubLenSize <= pPayloadArray->maxPayloadSubLenSize && payloadLength <= pPayloadArray->maxPayloadLength,
+                    STATUS_BUFFER_TOO_SMALL);
 
                 MEMCPY(pPayload + FU_A_HEADER_SIZE, pCurPtrInNalu, curPayloadSize);
                 /* FU-A indicator is 28 */
@@ -199,7 +199,8 @@ STATUS createPayloadFromNalu(UINT32 mtu, PBYTE nalu, UINT32 naluLength, PPayload
                 if (remainingNaluLength == naluLength - 1) {
                     // Set for starting bit
                     pPayload[1] |= 1 << 7;
-                } else if (remainingNaluLength == curPayloadSize) {
+                }
+                else if (remainingNaluLength == curPayloadSize) {
                     // Set for ending bit
                     pPayload[1] |= 1 << 6;
                 }
@@ -219,8 +220,7 @@ CleanUp:
         payloadSubLenSize = 0;
     }
 
-    if (filledLength != NULL && filledSubLenSize != NULL)
-    {
+    if (filledLength != NULL && filledSubLenSize != NULL) {
         *filledLength = payloadLength;
         *filledSubLenSize = payloadSubLenSize;
     }
@@ -249,7 +249,7 @@ STATUS depayH264FromRtpPayload(PBYTE pRawPacket, UINT32 packetLength, PBYTE pNal
     // TODO: Add support for Aggregate Packets https://tools.ietf.org/html/rfc6184#section-5.7
     // indicator for types https://tools.ietf.org/html/rfc3984#section-5.2
     indicator = *pRawPacket & NAL_TYPE_MASK;
-    switch(indicator) {
+    switch (indicator) {
         case FU_A_INDICATOR:
             // FU-A indicator
             naluRefIdc = *pCurPtr & 0x60;
@@ -258,7 +258,8 @@ STATUS depayH264FromRtpPayload(PBYTE pRawPacket, UINT32 packetLength, PBYTE pNal
             isStartingPacket = (*pCurPtr & (1 << 7)) != 0;
             if (isStartingPacket) {
                 naluLength = packetLength - FU_A_HEADER_SIZE + 1;
-            } else {
+            }
+            else {
                 naluLength = packetLength - FU_A_HEADER_SIZE;
             }
             break;
@@ -277,7 +278,7 @@ STATUS depayH264FromRtpPayload(PBYTE pRawPacket, UINT32 packetLength, PBYTE pNal
             isStartingPacket = TRUE;
             break;
         case STAP_B_INDICATOR:
-            pCurPtr+= STAP_B_HEADER_SIZE;
+            pCurPtr += STAP_B_HEADER_SIZE;
             do {
                 subNaluSize = getInt16(*((PUINT16) pCurPtr));
                 pCurPtr += SIZEOF(UINT16);
@@ -311,7 +312,8 @@ STATUS depayH264FromRtpPayload(PBYTE pRawPacket, UINT32 packetLength, PBYTE pNal
             if (isStartingPacket) {
                 MEMCPY(pNaluData + 1, pRawPacket + FU_A_HEADER_SIZE, naluLength - 1);
                 *pNaluData = naluRefIdc | naluType;
-            } else {
+            }
+            else {
                 MEMCPY(pNaluData, pRawPacket + FU_A_HEADER_SIZE, naluLength);
             }
             break;
@@ -320,7 +322,8 @@ STATUS depayH264FromRtpPayload(PBYTE pRawPacket, UINT32 packetLength, PBYTE pNal
             if (isStartingPacket) {
                 MEMCPY(pNaluData + 1, pRawPacket + FU_B_HEADER_SIZE, naluLength - 1);
                 *pNaluData = naluRefIdc | naluType;
-            } else {
+            }
+            else {
                 MEMCPY(pNaluData, pRawPacket + FU_B_HEADER_SIZE, naluLength);
             }
             break;
@@ -379,4 +382,3 @@ CleanUp:
     LEAVES();
     return retStatus;
 }
-
